@@ -1,0 +1,46 @@
+{
+  "name": "@local/dsh-lumen",
+  "description": "DSH Lumen: a conversation-native knowledge lens prototype for DSH Web",
+  "version": "0.0.0-dev",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": []
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/dev-web.mjs",
+    "dev:link": "node scripts/dev-link.mjs",
+    "dev:unlink": "node scripts/dev-unlink.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "watch": "node scripts/watch.mjs"
+  },
+  "license": "UNLICENSED",
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "tsdown": "^0.22.2",
+    "typescript": "^6.0.3"
+  }
+}
