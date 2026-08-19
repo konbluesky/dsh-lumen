@@ -1,14 +1,69 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process'
+import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { build } from 'tsdown'
 
 export const pluginId = '@local/dsh-lumen'
+const clientExternals = [
+  'react',
+  'react/jsx-runtime',
+  'react-dom',
+  'react-dom/client',
+  '@deepseek-ai/cordis',
+  '@deepseek-ai/dsh-client-ui-slots',
+  '@deepseek-ai/dsh-client-web-react',
+  '@deepseek-ai/dsh-client-ui-primitives',
+  '@deepseek-ai/dsh-client-ui-attachment',
+  '@deepseek-ai/dsh-client-schema-form',
+  '@deepseek-ai/dsh-client-runtime/client',
+]
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const tempRoot = path.join(pluginRoot, '.dsh-lumen-build')
+const cssVirtualPrefix = '\0dsh-lumen-css:'
+const cssVirtualSuffix = '.mjs'
+
+function cssModulePlugin() {
+  return {
+    name: 'dsh-lumen-css-modules',
+    resolveId(source, importer) {
+      if (!source.endsWith('.module.css')) return null
+      return cssVirtualPrefix + path.resolve(path.dirname(importer), source) + cssVirtualSuffix
+    },
+    async load(id) {
+      if (!id.startsWith(cssVirtualPrefix)) return null
+      const emitted = id.slice(cssVirtualPrefix.length, -cssVirtualSuffix.length)
+      const marker = `${path.sep}lib${path.sep}types${path.sep}`
+      const sourceFile = emitted.includes(marker)
+        ? path.resolve(
+          emitted.slice(0, emitted.indexOf(marker)),
+          'src',
+          emitted.slice(emitted.indexOf(marker) + marker.length),
+        )
+        : emitted
+      const file = fsSync.existsSync(emitted) ? emitted : sourceFile
+      const source = await fs.readFile(file, 'utf8')
+      const classMap = Object.fromEntries([...source.matchAll(/\.([_a-zA-Z]+[_a-zA-Z0-9-]*)/g)]
+        .map(match => [match[1], match[1]]))
+      const tagId = `${pluginId}/${path.basename(file)}`
+      return [
+        `const css = ${JSON.stringify(source)};`,
+        `const tagId = ${JSON.stringify(tagId)};`,
+        'if (typeof document !== \'undefined\' && document.querySelector(\'style[data-plugin-css=\' + JSON.stringify(tagId) + \']\') === null) {',
+        '  const tag = document.createElement(\'style\');',
+        `  tag.dataset.plugin = ${JSON.stringify(pluginId)};`,
+        '  tag.dataset.pluginCss = tagId;',
+        '  tag.textContent = css;',
+        '  document.head.appendChild(tag);',
+        '}',
+        `module.exports = ${JSON.stringify(classMap)};`,
+      ].join('\n')
+    },
+  }
+}
 
 function run(command, args) {
   return new Promise((resolve, reject) => {
@@ -70,6 +125,14 @@ export async function buildLumen() {
     dts: false,
     clean: true,
     sourcemap: false,
+    external: clientExternals,
+    noExternal: id => clientExternals.includes(id) ? undefined : true,
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production'),
+      'import.meta.env.MODE': JSON.stringify(process.env.NODE_ENV ?? 'production'),
+      'import.meta.env': JSON.stringify({ MODE: process.env.NODE_ENV ?? 'production' }),
+    },
+    plugins: [cssModulePlugin()],
   })
 
   await writeClientBundle()

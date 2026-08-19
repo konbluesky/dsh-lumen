@@ -17,6 +17,7 @@
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
+    "experimentalDecorators": false,
     "skipLibCheck": true
   },
   "include": ["src"]

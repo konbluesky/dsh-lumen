@@ -7,8 +7,6 @@ const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
 const dshRoot = path.resolve(process.env.DSH_ROOT ?? path.join(pluginRoot, '..', 'deepseek-harness'))
 const patchPath = path.join(pluginRoot, 'debug', 'dsh-lumen.cordis.patch.yml')
 
-await import('./dev-link.mjs')
-
 const watcher = spawn('node', ['scripts/watch.mjs'], {
   cwd: pluginRoot,
   stdio: 'inherit',
@@ -21,7 +19,8 @@ const args = process.env.DSH_DEV_BIN === undefined
   : ['--import', 'tsx/esm', 'apps/cli/src/bin.ts', 'web', '--patch', patchPath]
 
 console.log(`[dsh-lumen] starting DSH Web from ${dshRoot}`)
-console.log(`[dsh-lumen] hot reload: editing lib/client.js is picked up by DSH client-hmr`)
+console.log('[dsh-lumen] requires plugin installation through: dsh plugin --profile web add .')
+console.log('[dsh-lumen] hot reload: lib/client.js changes are picked up by DSH client-hmr')
 
 const child = spawn(bin, args, {
   cwd: dshRoot,

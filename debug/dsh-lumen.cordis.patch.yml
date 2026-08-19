@@ -1,11 +1,12 @@
 # Overlay used while developing the local DSH Lumen plugin.
 #
 # Usage:
+#   dsh plugin --profile web add /path/to/dsh-lumen
 #   cd /path/to/deepseek-harness
 #   pnpm dsh web --patch /path/to/dsh-lumen/debug/dsh-lumen.cordis.patch.yml
 #
-# The package name is resolved through a development symlink created by:
-#   node /path/to/dsh-lumen/scripts/dev-link.mjs
+# Package resolution is managed by the DSH profile package manager, not by
+# manually writing symlinks into the DSH checkout or profile node_modules.
 
 - insert:
     - id: ui-lumen
